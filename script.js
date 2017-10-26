@@ -266,7 +266,8 @@ var swipeMove = 20;
 window.addEventListener("touchstart", event =>{	
 	swipe.x = event.changedTouches[0].screenX;
 	swipe.y = event.changedTouches[0].screenY;
-	swipe.active = false;	
+	swipe.active = false;
+	event.preventDefault();
 }, false);
 
 window.addEventListener("touchmove", event =>{
@@ -287,6 +288,7 @@ window.addEventListener("touchmove", event =>{
 		playerDrop();
 		swipe.y = event.changedTouches[0].screenY;
 		swipe.active = true;	
+	event.preventDefault();
 	}
 }, false);
 
@@ -294,6 +296,7 @@ window.addEventListener("touchend", event =>{
 	if(!swipe.active){
 		playerRotate(1);
 	}
+	event.preventDefault();
 }, false);
 
 
