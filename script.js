@@ -263,38 +263,41 @@ swipe = {
 
 var swipeMove = 20;
 
-document.addEventListener("touchstart", event =>{
+window.addEventListener("touchstart", event =>{
+	
+	playerRotate(1);
+	
 	swipe.x = event.changedTouches[0].screenX;
 	swipe.y = event.changedTouches[0].screenY;
 	swipe.active = false;	
 }, false);
 
-document.addEventListener("touchmove", event =>{
-	swipe.dx = swipe.x - event.changedTouches[0].screenX;
-	if(swipe.dx < -swipeMove){
-		playerMove(1);
-		swipe.x = event.changedTouches[0].screenX;
-		swipe.active = true;	
-	}
-	if(swipe.dx > swipeMove){
-		playerMove(-1);
-		swipe.x = event.changedTouches[0].screenX;
-		swipe.active = true;	
-	}
-	
-	swipe.dy = swipe.y - event.changedTouches[0].screenY;
-	if(swipe.dy < -swipeMove){
-		playerDrop();
-		swipe.y = event.changedTouches[0].screenY;
-		swipe.active = true;	
-	}
-}, false);
-
-document.addEventListener("touchend", event =>{
-	if(!swipe.active){
-		playerRotate(1);
-	}
-}, false);
+//window.addEventListener("touchmove", event =>{
+//	swipe.dx = swipe.x - event.changedTouches[0].screenX;
+//	if(swipe.dx < -swipeMove){
+//		playerMove(1);
+//		swipe.x = event.changedTouches[0].screenX;
+//		swipe.active = true;	
+//	}
+//	if(swipe.dx > swipeMove){
+//		playerMove(-1);
+//		swipe.x = event.changedTouches[0].screenX;
+//		swipe.active = true;	
+//	}
+//	
+//	swipe.dy = swipe.y - event.changedTouches[0].screenY;
+//	if(swipe.dy < -swipeMove){
+//		playerDrop();
+//		swipe.y = event.changedTouches[0].screenY;
+//		swipe.active = true;	
+//	}
+//}, false);
+//
+//window.addEventListener("touchend", event =>{
+//	if(!swipe.active){
+//		playerRotate(1);
+//	}
+//}, false);
 
 
 document.addEventListener('keydown', event => {
