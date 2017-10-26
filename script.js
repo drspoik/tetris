@@ -99,6 +99,17 @@ function createPiece(type){
 	}
 }
 
+const colors = [
+	null,
+	'#A000F1',
+	'#F0F001',
+	'#EFA000',
+	'#0100F0',
+	'#00F0F1',
+	'#00F000',
+	'#F00100'
+]
+
 function draw(){
 	ctx.fillStyle = "#000000";
 	ctx.fillRect(0, 0, canvas.width,canvas.height);
@@ -106,33 +117,27 @@ function draw(){
 	drawMatrix(player.matrix, player.pos );	
 }
 
+const pieceBorder = 0.1;
+
 function drawMatrix(matrix, offset){
 	matrix.forEach((row,y) => {
 		row.forEach((value,x) => {
 			if(value != 0){
 				ctx.fillStyle = colors[value];
-				ctx.fillRect(x + offset.x,
-							 y + offset.y
-							 ,1,1);
+				ctx.fillRect(x + offset.x + pieceBorder,
+							 y + offset.y + pieceBorder,
+							 1 - pieceBorder, 1 - pieceBorder);				
 			}
 		});
 	});
 }
+
 let dropCounter = 0;
 let dropInterval = 1000;
+let dropIntervalStart;
+let dropIntervalReduction = 10;
 
 let lastTime = 0;
-
-const colors = [
-	null,
-	'red',
-	'blue',
-	'green',
-	'purple',
-	'orange',
-	'yellow',
-	'pink'
-]
 
 function update(time = 0){
 	const deltaTime = time - lastTime;
@@ -169,16 +174,23 @@ function playerMove(dir){
 }
 
 function playerReset(){
+	player.pos.y = 0;
+	
 	const pieces = 'ILJOTSZ';
 	player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]); //floored
 	player.pos.y = 0;
 	player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
-	
 	if(collide(arena, player)){
-		arena.forEach(row => row.fill(0));
-		player.score = 0;
-		updateScore();
+		restartGame();
 	}
+}
+
+function restartGame()
+{
+	arena.forEach(row => row.fill(0));
+	player.score = 0;
+	updateScore();
+	dropInterval = dropIntervalStart;
 }
 
 function playerRotate(dir){
@@ -222,15 +234,17 @@ function playerDrop(){
 	if(collide(arena, player)) {
 		player.pos.y--;
 		merge(arena, player);
-		player.pos.y = 0;
 		playerReset();
+		if(dropInterval >= dropIntervalReduction){
+			dropInterval -= dropIntervalReduction;			
+		}
 		arenaSweep();
 		updateScore();
 	}
 	dropCounter = 0;
 }
 
-const arena = createMatrix(12,20);
+const arena = createMatrix(10,20);
 //console.table(arena);
 
 const player = {
@@ -258,6 +272,7 @@ document.addEventListener('keydown', event => {
 	}
 })
 
+dropIntervalStart = dropInterval;
 playerReset();
 updateScore();
 update();

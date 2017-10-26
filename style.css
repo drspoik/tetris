@@ -6,6 +6,6 @@ body{
 	text-align: center;
 }
 canvas{
-	border: solid .2em #fff;
-	height: 90vh;
+	border: groove 0.5em #fff;
+	height: 60vh;
 }
