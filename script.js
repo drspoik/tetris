@@ -253,6 +253,50 @@ const player = {
 	score: 0,
 }
 
+swipe = {
+	x: 0,
+	y: 0,
+	dx: 0,
+	dy: 0,
+	active: false,
+}
+
+var swipeMove = 20;
+
+document.addEventListener("touchstart", event =>{
+	swipe.x = event.changedTouches[0].screenX;
+	swipe.y = event.changedTouches[0].screenY;
+	swipe.active = false;	
+}, false);
+
+document.addEventListener("touchmove", event =>{
+	swipe.dx = swipe.x - event.changedTouches[0].screenX;
+	if(swipe.dx < -swipeMove){
+		playerMove(1);
+		swipe.x = event.changedTouches[0].screenX;
+		swipe.active = true;	
+	}
+	if(swipe.dx > swipeMove){
+		playerMove(-1);
+		swipe.x = event.changedTouches[0].screenX;
+		swipe.active = true;	
+	}
+	
+	swipe.dy = swipe.y - event.changedTouches[0].screenY;
+	if(swipe.dy < -swipeMove){
+		playerDrop();
+		swipe.y = event.changedTouches[0].screenY;
+		swipe.active = true;	
+	}
+}, false);
+
+document.addEventListener("touchend", event =>{
+	if(!swipe.active){
+		playerRotate(1);
+	}
+}, false);
+
+
 document.addEventListener('keydown', event => {
 //	console.log(event)
 	if(event.keyCode == 37){
@@ -270,7 +314,7 @@ document.addEventListener('keydown', event => {
 	else if(event.keyCode == 87){
 		playerRotate(+1);
 	}
-})
+});
 
 dropIntervalStart = dropInterval;
 playerReset();
