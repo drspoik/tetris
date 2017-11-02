@@ -173,12 +173,25 @@ function playerMove(dir){
 	}
 }
 
+const pieces = 'ILJOTSZ';
+var pool = '';
+
+function randomizePool(){
+	//get a new random batch of pieces
+	pool = pieces.split('').sort(function(){return 0.5-Math.random()}).join('');
+}
+
 function playerReset(){
-	player.pos.y = 0;
+	if(pool.length == 0){
+		randomizePool();
+	}
+		
+	//get the last one and remove it from the pack
+	player.matrix = createPiece(pool[pool.length-1]);
+	pool = pool.slice(0,pool.length - 1);
 	
-	const pieces = 'ILJOTSZ';
-	player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]); //floored
 	player.pos.y = 0;
+	// | 0 is shorthand for flooring the floating point
 	player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
 	if(collide(arena, player)){
 		restartGame();
@@ -191,6 +204,7 @@ function restartGame()
 	player.score = 0;
 	updateScore();
 	dropInterval = dropIntervalStart;
+	randomizePool();
 }
 
 function playerRotate(dir){
