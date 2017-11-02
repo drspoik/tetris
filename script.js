@@ -259,22 +259,31 @@ function restartGame(){
 }
 
 function playerRotate(dir){
+	//clear at the current position 
 	clearMatrix(player.matrix,player.pos);
 	
 	var pos = player.pos.x;
 	var offset = 1;
 	rotate(player.matrix,dir);
 	
+	//retry to fit the rotated piece into the arena
 	while(collide(arena, player)){
 		player.pos.x += offset;
+		//shift it left and right with increasing distance
 		offset = -(offset + (offset > 0 ? 1 : -1));
+		//if it was shiftet more than the width of the piece, there is no possible position
 		if(offset > player.matrix[0].length){
+			//rotate it back
 			rotate(player.matrix, -dir);
+			//give it back its position
 			player.pos.x = pos;
+			//redraw it
+			drawMatrix(player.matrix, player.pos);
 			return;
 		}
 	}
 	
+	//draw it at the new position
 	drawMatrix(player.matrix, player.pos);
 }
 
