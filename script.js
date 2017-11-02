@@ -1,37 +1,62 @@
-const canvas = document.getElementById("tetrisCanvas");
-const ctx = canvas.getContext("2d");
-
-ctx.scale(20,20);
+var ctx;
+var pieceSize = 20;
 
 function arenaSweep(){
 	
-	let rowCount = 1;
+	var rowCount = 1;
+	var minRowClear = 0;
 	
-	outer: for(let y = arena.length - 1; y > 0; --y){
-		for(let x = 0; x < arena[y].length; ++x){
+	var clearFlag = false;
+	
+	//for every row, starting from the bottom
+	outer: for(var y = arena.length - 1; y > 0; --y){
+		//from left to right
+		for(var x = 0; x < arena[y].length; ++x){
+			//if any square is 0, therefore empty, skip it, since it can't be a full row anymore
 			if(arena[y][x] == 0){
 				continue outer;
 			}
 		}
 		
-		const row = arena.splice(y,1)[0].fill(0);
+		if(!clearFlag){
+			//remember the minimum row thats need to be cleared
+			minRowClear = y+1;
+			//clear the canvas from this row upwards
+			clearPartialMatrix(arena, {x:0, y:0}, {x:0, y:0}, {x:arena[y].length, y:minRowClear});
+			clearFlag = true;
+		}
+		
+		//when this row is full, remove the row
+		var row = arena.splice(y,1)[0];
+		
+		//set it to 0
+		row.fill(0);
+		//and insert it at the beginning (top)
 		arena.unshift(row);
+		
+		//repeat the same line again, since the bottom rows now shifted down
 		++y;
 		
+		//add to the score and keep track of a multiplier, rewarding clearing multiple rows in one go
 		player.score += rowCount*10;
 		rowCount *= 2;
+	}
+	
+	//if there was clearing, redraw parts of the arena
+	if(clearFlag){
+		drawPartialMatrix(arena, {x: 0, y:0}, {x:0, y:0}, {x:arena[0].length, y:minRowClear});
 	}
 }
 
 function collide(arena, player){
- 	const m = player.matrix;
-    const o = player.pos;
+	var m = player.matrix;
+    var o = player.pos;
 	
-	for(let y = 0; y < m.length; ++y){
-		for(let x = 0; x < m[y].length; ++x){
+	for(var y = 0; y < m.length; ++y){
+		for(var x = 0; x < m[y].length; ++x){
 			if(m[y][x] != 0 && 
-			   (arena[y + o.y] && 	//has row
-			   arena[y+o.y][x+o.x]) != 0){ //has column and is not 0
+				(arena[y + o.y] && 	//has row
+				arena[y+o.y][x+o.x]) != 0){ //has column and is not 0
 				return true;
 			}
 		}
@@ -40,7 +65,7 @@ function collide(arena, player){
 }
 
 function createMatrix(w,h){
-	const matrix = [];
+	var matrix = [];
 	while(h--){
 		matrix.push(new Array(w).fill(0));
 	}
@@ -99,7 +124,7 @@ function createPiece(type){
 	}
 }
 
-const colors = [
+var colors = [
 	null,
 	'#A000F1',
 	'#F0F001',
@@ -110,37 +135,51 @@ const colors = [
 	'#F00100'
 ]
 
-function draw(){
-	ctx.fillStyle = "#000000";
-	ctx.fillRect(0, 0, canvas.width,canvas.height);
-	drawMatrix(arena, {x: 0, y: 0});
-	drawMatrix(player.matrix, player.pos );	
-}
-
-const pieceBorder = 0.1;
+var pieceBorder = 1;
 
 function drawMatrix(matrix, offset){
-	matrix.forEach((row,y) => {
-		row.forEach((value,x) => {
-			if(value != 0){
+	drawPartialMatrix(matrix, offset, {x:0, y:0}, {x:matrix[0].length, y:matrix.length})
+}
+
+function drawPartialMatrix(matrix, offset, begin, end){
+	matrix.forEach(function(row,y){
+		row.forEach(function(value,x) {
+			if(value != 0 && x >= begin.x && x < end.x && y >= begin.y && y < end.y){
 				ctx.fillStyle = colors[value];
-				ctx.fillRect(x + offset.x + pieceBorder,
-							 y + offset.y + pieceBorder,
-							 1 - pieceBorder, 1 - pieceBorder);				
+				ctx.fillRect((x + offset.x) * pieceSize + pieceBorder,
+							(y + offset.y) * pieceSize + pieceBorder,
+							pieceSize - pieceBorder*2, pieceSize - pieceBorder*2);					
 			}
 		});
 	});
 }
 
-let dropCounter = 0;
-let dropInterval = 1000;
-let dropIntervalStart;
-let dropIntervalReduction = 10;
+function clearMatrix(matrix, offset){
+	clearPartialMatrix(matrix, offset, {x:0, y:0}, {x:matrix[0].length, y:matrix.length})
+}
 
-let lastTime = 0;
+function clearPartialMatrix(matrix, offset, begin, end){
+	matrix.forEach(function(row,y){
+		row.forEach(function(value,x){
+			if(value != 0 && x >= begin.x && x < end.x && y >= begin.y && y < end.y){
+				ctx.clearRect((x + offset.x) * pieceSize + pieceBorder,
+							(y + offset.y) * pieceSize + pieceBorder,
+							pieceSize - pieceBorder*2, pieceSize - pieceBorder*2);				
+			}
+		});
+	});
+}
 
-function update(time = 0){
-	const deltaTime = time - lastTime;
+var dropCounter = 0;
+var dropInterval = 1000;
+var dropIntervalStart;
+var dropIntervalReduction = 0.99;
+var dropMinInterval = 20;
+
+var lastTime = 0;
+
+function update(time){
+	var deltaTime = time - lastTime;
 	lastTime = time;
 	
 	dropCounter += deltaTime;
@@ -148,8 +187,7 @@ function update(time = 0){
 		playerDrop();
 	}
 	
-	draw();
-	requestAnimationFrame(update);
+	window.requestAnimationFrame(update);
 }
 
 function updateScore(){
@@ -157,8 +195,8 @@ function updateScore(){
 }
 
 function merge(arena, player){
-	player.matrix.forEach((row,y) =>{
-		row.forEach((value, x) => {
+	player.matrix.forEach(function(row,y){
+		row.forEach(function(value, x){
 			if(value != 0){
 				arena[y+player.pos.y][x+player.pos.x] = value;
 			}
@@ -167,13 +205,16 @@ function merge(arena, player){
 }
 
 function playerMove(dir){
+	clearMatrix(player.matrix,player.pos);
 	player.pos.x += dir;
 	if(collide(arena, player)){
 		player.pos.x -= dir;
 	}
+	drawMatrix(player.matrix, player.pos );	
+	
 }
 
-const pieces = 'ILJOTSZ';
+var pieces = 'ILJOTSZ';
 var pool = '';
 
 function randomizePool(){
@@ -193,14 +234,17 @@ function playerReset(){
 	player.pos.y = 0;
 	// | 0 is shorthand for flooring the floating point
 	player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+	
+	drawMatrix(player.matrix,player.pos);
+	
 	if(collide(arena, player)){
 		restartGame();
 	}
 }
 
-function restartGame()
-{
-	arena.forEach(row => row.fill(0));
+function restartGame(){
+	clearMatrix(arena, {x:0,y:0});
+	arena.forEach(function(row){row.fill(0)});
 	player.score = 0;
 	updateScore();
 	dropInterval = dropIntervalStart;
@@ -208,8 +252,10 @@ function restartGame()
 }
 
 function playerRotate(dir){
-	const pos = player.pos.x;
-	let offset = 1;
+	clearMatrix(player.matrix,player.pos);
+	
+	var pos = player.pos.x;
+	var offset = 1;
 	rotate(player.matrix,dir);
 	
 	while(collide(arena, player)){
@@ -221,11 +267,13 @@ function playerRotate(dir){
 			return;
 		}
 	}
+	
+	drawMatrix(player.matrix, player.pos);
 }
 
 function rotate(matrix, dir){
-	for(let y = 0; y < matrix.length; ++y){
-		for(let x = 0; x < y; ++x){
+	for(var y = 0; y < matrix.length; ++y){
+		for(var x = 0; x < y; ++x){
 			[
 				matrix[x][y],
 				matrix[y][x],
@@ -236,7 +284,7 @@ function rotate(matrix, dir){
 		}
 	}
 	if(dir > 0){
-		matrix.forEach(row => row.reverse());
+		matrix.forEach(function(row){row.reverse()});
 	}
 	else{
 		matrix.reverse();
@@ -244,93 +292,105 @@ function rotate(matrix, dir){
 }
 
 function playerDrop(){
+
+	clearMatrix(player.matrix,player.pos);
+	
 	player.pos.y++;
 	if(collide(arena, player)) {
 		player.pos.y--;
+		drawMatrix(player.matrix,player.pos);
+		
 		merge(arena, player);
 		playerReset();
-		if(dropInterval >= dropIntervalReduction){
-			dropInterval -= dropIntervalReduction;			
+		if(dropInterval >= dropMinInterval){
+			dropInterval *= dropIntervalReduction;			
 		}
 		arenaSweep();
 		updateScore();
 	}
 	dropCounter = 0;
+	
+	drawMatrix(player.matrix,player.pos);
+	
 }
 
-const arena = createMatrix(10,20);
-//console.table(arena);
+var arena = createMatrix(10,20);
 
-const player = {
+var player = {
 	pos: {x: 0, y: 0},
 	matrix: null,
 	score: 0,
 }
 
-swipe = {
-	x: 0,
-	y: 0,
-	dx: 0,
-	dy: 0,
-	active: false,
+function addListeners(element){
+	
+	var swipe = {x: 0, y: 0, dx: 0, dy: 0, active: false}
+	var swipeMove = 20;
+
+	element.addEventListener("touchstart", function (event){	
+		swipe.x = event.changedTouches[0].screenX;
+		swipe.y = event.changedTouches[0].screenY;
+		swipe.active = false;
+	}, false);
+
+	element.addEventListener("touchmove", function (event){
+		swipe.dx = swipe.x - event.changedTouches[0].screenX;
+		if(swipe.dx < -swipeMove){
+			playerMove(1);
+			swipe.x = event.changedTouches[0].screenX;
+			swipe.active = true;	
+		}
+		if(swipe.dx > swipeMove){
+			playerMove(-1);
+			swipe.x = event.changedTouches[0].screenX;
+			swipe.active = true;	
+		}
+
+		swipe.dy = swipe.y - event.changedTouches[0].screenY;
+		if(swipe.dy < -swipeMove){
+			playerDrop();
+			swipe.y = event.changedTouches[0].screenY;
+			swipe.active = true;	
+		}
+	}, false);
+
+	element.addEventListener("touchend", function (){
+		if(!swipe.active){
+			playerRotate(1);
+		}
+	}, false);
+	
+	element.addEventListener('keydown', function (event){
+		if(event.keyCode == 37){
+			playerMove(-1);
+		}
+		else if(event.keyCode == 39){
+			playerMove(+1);
+		}
+		else if(event.keyCode == 40){
+			playerDrop();
+		}
+		else if(event.keyCode == 81){
+			playerRotate(-1);
+		}
+		else if(event.keyCode == 87){
+			playerRotate(+1);
+		}
+	});
 }
 
-var swipeMove = 20;
-
-window.addEventListener("touchstart", event =>{	
-	swipe.x = event.changedTouches[0].screenX;
-	swipe.y = event.changedTouches[0].screenY;
-	swipe.active = false;
-}, false);
-
-window.addEventListener("touchmove", event =>{
-	swipe.dx = swipe.x - event.changedTouches[0].screenX;
-	if(swipe.dx < -swipeMove){
-		playerMove(1);
-		swipe.x = event.changedTouches[0].screenX;
-		swipe.active = true;	
-	}
-	if(swipe.dx > swipeMove){
-		playerMove(-1);
-		swipe.x = event.changedTouches[0].screenX;
-		swipe.active = true;	
-	}
+function main(){
 	
-	swipe.dy = swipe.y - event.changedTouches[0].screenY;
-	if(swipe.dy < -swipeMove){
-		playerDrop();
-		swipe.y = event.changedTouches[0].screenY;
-		swipe.active = true;	
-	}
-}, false);
+	ctx = document.getElementById("tetrisCanvas").getContext("2d");
+	ctx.width *= pieceSize;
+	ctx.height *= pieceSize;
+	
+	addListeners(window);
 
-window.addEventListener("touchend", event =>{
-	if(!swipe.active){
-		playerRotate(1);
-	}
-}, false);
+	dropIntervalStart = dropInterval;
+	playerReset();
+	updateScore();
+	update(0);
+}
 
-
-document.addEventListener('keydown', event => {
-//	console.log(event)
-	if(event.keyCode == 37){
-		playerMove(-1);
-	}
-	else if(event.keyCode == 39){
-		playerMove(+1);
-	}
-	else if(event.keyCode == 40){
-		playerDrop();
-	}
-	else if(event.keyCode == 81){
-		playerRotate(-1);
-	}
-	else if(event.keyCode == 87){
-		playerRotate(+1);
-	}
-});
-
-dropIntervalStart = dropInterval;
-playerReset();
-updateScore();
-update();
+main();
