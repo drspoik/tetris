@@ -1,7 +1,8 @@
 var ctx;
 var pieceSize = 20;
 
-function arenaSweep(){
+//goes through the arena and clears all rows that are full
+function clearArenaRows(){
 	
 	var rowCount = 1;
 	var minRowClear = 0;
@@ -48,6 +49,7 @@ function arenaSweep(){
 	}
 }
 
+//checks if the player collides with any other piece
 function collide(arena, player){
 	var m = player.matrix;
     var o = player.pos;
@@ -75,9 +77,9 @@ function createMatrix(w,h){
 function createPiece(type){
 	if(type == 'T'){
 		return [
-				[0,0,0],
 				[1,1,1],
-				[0,1,0]
+				[0,1,0],
+				[0,0,0]
 		];
 	}
 	else if(type == 'O'){
@@ -124,6 +126,7 @@ function createPiece(type){
 	}
 }
 
+//colors correspond with the value of the matrix
 var colors = [
 	null,
 	'#A000F1',
@@ -190,8 +193,10 @@ function update(time){
 	window.requestAnimationFrame(update);
 }
 
+var scoreElement = document.getElementById("score");
+
 function updateScore(){
-	document.getElementById("score").innerText = player.score;
+	scoreElement.innerText = player.score;
 }
 
 function merge(arena, player){
@@ -210,30 +215,29 @@ function playerMove(dir){
 	if(collide(arena, player)){
 		player.pos.x -= dir;
 	}
-	drawMatrix(player.matrix, player.pos );	
-	
+	drawMatrix(player.matrix, player.pos);	
 }
 
 var pieces = 'ILJOTSZ';
 var pool = '';
 
-function randomizePool(){
+function refreshPool(){
 	//get a new random batch of pieces
 	pool = pieces.split('').sort(function(){return 0.5-Math.random()}).join('');
 }
 
 function playerReset(){
 	if(pool.length == 0){
-		randomizePool();
+		refreshPool();
 	}
 		
-	//get the last one and remove it from the pack
+	//get the last one and remove it from the bag
 	player.matrix = createPiece(pool[pool.length-1]);
 	pool = pool.slice(0,pool.length - 1);
 	
+	//reset the players position to the top and middle
 	player.pos.y = 0;
-	// | 0 is shorthand for flooring the floating point
-	player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+	player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0); // | 0 is shorthand for flooring the floating point
 	
 	drawMatrix(player.matrix,player.pos);
 	
@@ -245,10 +249,13 @@ function playerReset(){
 function restartGame(){
 	clearMatrix(arena, {x:0,y:0});
 	arena.forEach(function(row){row.fill(0)});
+	
 	player.score = 0;
 	updateScore();
+	
 	dropInterval = dropIntervalStart;
-	randomizePool();
+	
+	refreshPool();
 }
 
 function playerRotate(dir){
@@ -305,7 +312,7 @@ function playerDrop(){
 		if(dropInterval >= dropMinInterval){
 			dropInterval *= dropIntervalReduction;			
 		}
-		arenaSweep();
+		clearArenaRows();
 		updateScore();
 	}
 	dropCounter = 0;
@@ -326,10 +333,14 @@ function addListeners(element){
 	
 	var swipe = {x: 0, y: 0, dx: 0, dy: 0, active: false}
 	var swipeMove = 20;
-
-	element.addEventListener("touchstart", function (event){	
+	
+	function cacheSwipe(event){
 		swipe.x = event.changedTouches[0].screenX;
 		swipe.y = event.changedTouches[0].screenY;
+	}
+
+	element.addEventListener("touchstart", function (event){	
+		cacheSwipe(event);
 		swipe.active = false;
 	}, false);
 
@@ -337,19 +348,20 @@ function addListeners(element){
 		swipe.dx = swipe.x - event.changedTouches[0].screenX;
 		if(swipe.dx < -swipeMove){
 			playerMove(1);
-			swipe.x = event.changedTouches[0].screenX;
+			cacheSwipe(event);
+
 			swipe.active = true;	
 		}
 		if(swipe.dx > swipeMove){
 			playerMove(-1);
-			swipe.x = event.changedTouches[0].screenX;
+			cacheSwipe(event);
 			swipe.active = true;	
 		}
 
 		swipe.dy = swipe.y - event.changedTouches[0].screenY;
 		if(swipe.dy < -swipeMove){
 			playerDrop();
-			swipe.y = event.changedTouches[0].screenY;
+			cacheSwipe(event);
 			swipe.active = true;	
 		}
 	}, false);

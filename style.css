@@ -5,7 +5,7 @@ overflow: hidden;
 }
 
 body{
-	background: #202020;
+	background: #363636;
 	color: #fff;
 	font-family: monospace;
 	font-size: 30px;
@@ -19,6 +19,7 @@ canvas{
 	border: groove 17px #ddd;
 	/*17px border top and bottom, 33px for the score on top and 33px on the bottom to center it */
 	height: calc(100% - 17px*2 - 33px * 2);
+	background: #1E1D1D;
 }
 #score{
 	height: 33px;
