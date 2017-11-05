@@ -378,9 +378,7 @@ function addListeners(element){
 			cacheSwipe(event);
 			swipe.active = true;	
 		}
-		
-		event.preventDefault();
-	});
+	}, false);
 
 	element.addEventListener("touchend", function (){
 		if(!swipe.active){
