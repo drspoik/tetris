@@ -289,9 +289,6 @@ function playerRotate(dir){
 
 function rotate(matrix, dir){
 	for(var y = 0; y < matrix.length; ++y){
-		//rotating the matrix by swapping tuples
-		//[a, b] = [b, a] swaps 2 variables without a temp variable
-		//this effectivly mirrors the matrix along its diagonal top_left to bottom_right
 		for(var x = 0; x < y; ++x){
 			[
 				matrix[x][y],
@@ -302,8 +299,6 @@ function rotate(matrix, dir){
 			]
 		}
 	}
-	
-	//depending on the rotation direction either reverse the rows or columns
 	if(dir > 0){
 		matrix.forEach(function(row){row.reverse()});
 	}
