@@ -356,7 +356,8 @@ function addListeners(element){
 	element.addEventListener("touchstart", function (event){	
 		cacheSwipe(event);
 		swipe.active = false;
-	}, false);
+		event.preventDefault();
+	});
 
 	element.addEventListener("touchmove", function (event){
 		swipe.dx = swipe.x - event.changedTouches[0].screenX;
@@ -378,13 +379,16 @@ function addListeners(element){
 			cacheSwipe(event);
 			swipe.active = true;	
 		}
-	}, false);
+		
+		event.preventDefault();
+	});
 
 	element.addEventListener("touchend", function (){
 		if(!swipe.active){
 			playerRotate(1);
 		}
-	}, false);
+		event.preventDefault();
+	});
 	
 	element.addEventListener('keydown', function (event){
 		if(event.keyCode == 37){
