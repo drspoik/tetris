@@ -379,8 +379,8 @@ function addListeners(element){
 			swipe.active = true;	
 		}
 		
-		event.stopPropagation();
-	}, false);
+		event.preventDefault();
+	});
 
 	element.addEventListener("touchend", function (){
 		if(!swipe.active){
