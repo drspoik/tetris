@@ -356,6 +356,7 @@ function addListeners(element){
 	element.addEventListener("touchstart", function (event){	
 		cacheSwipe(event);
 		swipe.active = false;
+		event.stopPropagation();
 		event.preventDefault();
 	});
 
@@ -379,7 +380,7 @@ function addListeners(element){
 			cacheSwipe(event);
 			swipe.active = true;	
 		}
-		
+		event.stopPropagation();
 		event.preventDefault();
 	});
 
@@ -387,6 +388,7 @@ function addListeners(element){
 		if(!swipe.active){
 			playerRotate(1);
 		}
+		event.stopPropagation();
 		event.preventDefault();
 	});
 	
