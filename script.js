@@ -403,13 +403,13 @@ function playerDrop(){
 		drawMatrix(player.matrix,player.pos);
 		
 		merge(arena, player);
-		playerReset();
 		if(dropInterval >= dropMinInterval){
 			dropInterval *= dropIntervalReduction;			
 		}
 		if(clearArenaRows()){
 			updateScore();
 		}
+		playerReset();
 	}
 	dropCounter = 0;
 	
