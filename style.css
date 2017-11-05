@@ -2,8 +2,8 @@ html{
 	margin:0;
 	padding:0;
 	overflow: hidden;
-	-webkit-overflow-scrolling: auto;
-	overflow-scrolling: auto; 
+	-webkit-overflow-scrolling: touch;
+	overflow-scrolling: touch; 
 }
 
 body{
