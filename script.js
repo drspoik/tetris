@@ -510,26 +510,6 @@ function addListeners(element){
 			playerRotate(+1);
 		}
 	});
-	
-	element.addEventListener('resize', resize, false);
-}
-
-var topbar = document.getElementById("topbar");
-var copyright = document.getElementById("copyright");
-
-function resize(){
-	ratio = document.body.clientWidth / document.body.clientHeight;
-
-	if(ratio < 0.5){
-		canvas.className = "narrow";
-		topbar.className = "narrow";
-		copyright.className = "narrow";
-	}
-	else{
-		canvas.className = "wide";
-		topbar.className = "wide";
-		copyright.className = "wide";
-	}	
 }
 
 var bounds = {
@@ -567,4 +547,3 @@ function main(){
 }
 
 main();
-resize();

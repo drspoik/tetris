@@ -17,19 +17,17 @@ body{
 	overflow: hidden;
 }
 canvas{
+	border: groove 17px #ddd;
+	/*17px border top and bottom, 33px for the score on top and 33px on the bottom to center it */
+	height: calc(100% - 17px*2 - 33px * 2);
 	background: #1E1D1D;
 }
 
-canvas.narrow{
-	border: groove 4vw #ddd;
-	width: 89vw;
-	height: auto;
-}
-
-canvas.wide{
-	border: groove 2vh #ddd;
-	height: 89vh;
-	widows: auto;
+#copyright{
+	padding-top: 9px;
+	font-size: 15px;
+	height: 33px;
+	color: gray;
 }
 
 #topbar{
@@ -38,6 +36,9 @@ canvas.wide{
 	position: relative;
 	text-align: center;
 	width: 100%;
+	
+	font-size: 2.5vh;
+	height: 4vh;
 }
 
 #score, #highscore{
@@ -47,30 +48,3 @@ canvas.wide{
 	height: inherit;
 	padding-right: 1em;
 }
-
-#topbar.narrow{
-	font-size: 5vw;
-	height: 8vw;
-}
-
-#topbar.wide{
-	font-size: 2.5vh;
-	height: 4vh;
-}
-
-#copyright{
-	color: gray;
-}
-
-#copyright.narrow{
-	padding-top: 2px;
-	font-size: 4vw;
-	height: 6vw;
-}
-
-#copyright.wide{
-	padding-top: 2px;
-	font-size: 2vh;
-	height: 3vh;
-}
-
