@@ -1,5 +1,8 @@
+var canvas;
 var ctx;
-var pieceSize = 20;
+var pieceSize = 100;
+
+var gameMode = 0;
 
 //goes through the arena and clears all rows that are full
 function clearArenaRows(){
@@ -40,6 +43,7 @@ function clearArenaRows(){
 		
 		//add to the score and keep track of a multiplier, rewarding clearing multiple rows in one go
 		player.score += rowCount*10;
+		
 		rowCount *= 2;
 	}
 	
@@ -47,6 +51,13 @@ function clearArenaRows(){
 	if(clearFlag){
 		drawPartialMatrix(arena, {x: 0, y:0}, {x:0, y:0}, {x:arena[0].length, y:minRowClear});
 	}
+	
+	if(player.score > player.highscore){
+		player.highscore = player.score;
+		localStorage.setItem("highscore", player.highscore);
+	}
+	
+	return clearFlag;
 }
 
 //checks if the player collides with any other piece
@@ -135,10 +146,11 @@ var colors = [
 	'#0100F0',
 	'#00F0F1',
 	'#00F000',
-	'#F00100'
+	'#F00100',
+	'#aaa'
 ]
 
-var pieceBorder = 1;
+var pieceBorder = 5;
 
 function drawMatrix(matrix, offset){
 	drawPartialMatrix(matrix, offset, {x:0, y:0}, {x:matrix[0].length, y:matrix.length})
@@ -185,18 +197,29 @@ function update(time){
 	var deltaTime = time - lastTime;
 	lastTime = time;
 	
-	dropCounter += deltaTime;
-	if(dropCounter > dropInterval){
-		playerDrop();
+	if(gameMode == 1){
+		dropCounter += deltaTime;
+		if(dropCounter > dropInterval){
+			playerDrop();
+		}
 	}
-	
+		
 	window.requestAnimationFrame(update);
 }
 
+function startGame(){
+	ctx.clearRect(0,0,bounds.x,bounds.y);
+	
+	playerReset();
+	gameMode = 1;
+}
+
 var scoreElement = document.getElementById("score");
+var highscoreElement = document.getElementById("highscore");
 
 function updateScore(){
-	scoreElement.innerText = player.score;
+	scoreElement.innerText = "Score: "+player.score;
+	highscoreElement.innerText = "Highscore: "+player.highscore;
 }
 
 function merge(arena, player){
@@ -210,6 +233,10 @@ function merge(arena, player){
 }
 
 function playerMove(dir){
+	if(gameMode == 2){
+		return;		
+	}
+	
 	clearMatrix(player.matrix,player.pos);
 	player.pos.x += dir;
 	if(collide(arena, player)){
@@ -239,15 +266,18 @@ function playerReset(){
 	player.pos.y = 0;
 	player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0); // | 0 is shorthand for flooring the floating point
 	
-	drawMatrix(player.matrix,player.pos);
-	
 	if(collide(arena, player)){
-		restartGame();
+		gameOver();
+	}
+	else{
+		drawMatrix(player.matrix,player.pos);
 	}
 }
 
 function restartGame(){
-	clearMatrix(arena, {x:0,y:0});
+	gameMode = 1;
+//	clearMatrix(arena, {x:0,y:0});
+	ctx.clearRect(0,0,bounds.x,bounds.y);
 	arena.forEach(function(row){row.fill(0)});
 	
 	player.score = 0;
@@ -258,7 +288,54 @@ function restartGame(){
 	refreshPool();
 }
 
+function gameOver(){
+	console.log("score: "+player.score);
+	
+	var highscore = localStorage.getItem("highscore");
+	
+	console.log("highscore: "+highscore);
+	
+	if(player.score > highscore){
+		localStorage.setItem("highscore", player.score);		
+	}
+	
+	gameMode = 2;
+	
+	var i = 0;
+	
+	fillArenaLoop(200);
+}
+
+function fillArenaLoop(i){
+	if(i > 0){
+		setTimeout(
+	  		function(){ 
+				var pos = {x:cols - (totalCells-i) % cols - 1, y: Math.ceil((i / cols - 1))};
+				
+//				if(arena[pos.y][pos.x] == 0)
+				drawMatrix([[8]], pos);
+				
+				fillArenaLoop(--i);		
+	  		}, 5);
+	}
+	else{
+		var boxSize = {width: 350, height: 150};
+		
+		ctx.clearRect(bounds.x / 2 - boxSize.width,bounds.y / 2 - boxSize.height, boxSize.width * 2 , boxSize.height * 2);
+		
+		ctx.fillStyle = "white";
+		ctx.fillText("tap / press", bounds.x / 2,bounds.y / 2 - 30);
+		ctx.fillText("to restart", bounds.x / 2,bounds.y / 2 + 70);
+		
+		gameMode = 4;
+	}
+}
+
 function playerRotate(dir){
+	if(gameMode == 2){
+		return;		
+	}
+	
 	//clear at the current position 
 	clearMatrix(player.matrix,player.pos);
 	
@@ -314,6 +391,10 @@ function rotate(matrix, dir){
 
 function playerDrop(){
 
+	if(gameMode == 2){
+		return;		
+	}
+	
 	clearMatrix(player.matrix,player.pos);
 	
 	player.pos.y++;
@@ -326,21 +407,27 @@ function playerDrop(){
 		if(dropInterval >= dropMinInterval){
 			dropInterval *= dropIntervalReduction;			
 		}
-		clearArenaRows();
-		updateScore();
+		if(clearArenaRows()){
+			updateScore();
+		}
 	}
 	dropCounter = 0;
 	
-	drawMatrix(player.matrix,player.pos);
-	
+	if(gameMode != 2){
+		drawMatrix(player.matrix,player.pos);
+	}
 }
 
 var arena = createMatrix(10,20);
+var cols = arena[0].length;
+var rows = arena.length;
+var totalCells = cols * rows;
 
 var player = {
 	pos: {x: 0, y: 0},
 	matrix: null,
 	score: 0,
+	highscore: 0,
 }
 
 function addListeners(element){
@@ -354,6 +441,13 @@ function addListeners(element){
 	}
 
 	element.addEventListener("touchstart", function (event){	
+		if(gameMode == 0){
+			startGame();
+		}
+		else if(gameMode == 4){
+			restartGame();
+		}
+		
 		cacheSwipe(event);
 		swipe.active = false;
 		event.stopPropagation();
@@ -393,6 +487,13 @@ function addListeners(element){
 	});
 	
 	element.addEventListener('keydown', function (event){
+		if(gameMode == 0){
+			startGame();
+		}
+		else if(gameMode == 4){
+			restartGame();
+		}
+		
 		if(event.keyCode == 37){
 			playerMove(-1);
 		}
@@ -409,20 +510,61 @@ function addListeners(element){
 			playerRotate(+1);
 		}
 	});
+	
+	element.addEventListener('resize', resize, false);
+}
+
+var topbar = document.getElementById("topbar");
+var copyright = document.getElementById("copyright");
+
+function resize(){
+	ratio = document.body.clientWidth / document.body.clientHeight;
+
+	if(ratio < 0.5){
+		canvas.className = "narrow";
+		topbar.className = "narrow";
+		copyright.className = "narrow";
+	}
+	else{
+		canvas.className = "wide";
+		topbar.className = "wide";
+		copyright.className = "wide";
+	}	
+}
+
+var bounds = {
+	x: arena[0].length * pieceSize,
+	y: arena.length * pieceSize
 }
 
 function main(){
 	
-	ctx = document.getElementById("tetrisCanvas").getContext("2d");
-	ctx.width *= pieceSize;
-	ctx.height *= pieceSize;
+	var cachedHighscore = localStorage.getItem("highscore");
+	if(cachedHighscore != NaN && cachedHighscore != null){
+		player.highscore = cachedHighscore;
+	}
+	else{
+		player.highscore = 0;
+	}
+	
+	canvas = document.getElementById("tetrisCanvas");
+	ctx = canvas.getContext("2d");
+	
+	ctx.font = "70px monospace";
+	ctx.fillStyle = "white";
+	ctx.textAlign = "center";
+	
+	ctx.fillText("Tap or press to start", bounds.x * 0.5, bounds.y * 0.5 - 200);
+	ctx.fillText("Mobile: Swipe & tap", bounds.x * 0.5, bounds.y * 0.5);
+	ctx.fillText("Desktop: Arrows & Q/W", bounds.x * 0.5, bounds.y * 0.5 + 200);
 	
 	addListeners(window);
 
 	dropIntervalStart = dropInterval;
-	playerReset();
 	updateScore();
+	
 	update(0);
 }
 
 main();
+resize();
